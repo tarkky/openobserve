@@ -16,7 +16,7 @@
 // MySQL data-source setup card. Follows the OpenObserve guide:
 // https://openobserve.ai/blog/monitor-mysql-metrics-otel (requires MySQL 8.0+).
 
-import { gt, raw } from "@/types/i18n";
+import { raw, type TranslateFn } from "@/types/i18n";
 
 import { getImageURL } from "@/utils/zincutils";
 import type { CardSubstitutions, RichCardContent } from "../types";
@@ -88,17 +88,17 @@ service:
       processors: [batch]
       exporters: [otlphttp/openobserve]`;
 
-export default function mysqlCard(subs: CardSubstitutions): RichCardContent {
+export default function mysqlCard(subs: CardSubstitutions, t: TranslateFn): RichCardContent {
   const tool = sharedToolIcons();
   return {
     provider: {
-      name: "MySQL",
-      tagline: gt("ingestion.setupCard.mysqlTagline"),
+      name: raw("MySQL"),
+      tagline: t("ingestion.setupCard.mysqlTagline"),
       logo: getImageURL("images/ingestion/mysql.svg"),
       tone: "#00758F",
       // Logs too: the optional Database Monitoring steps ship deadlock and
       // blocking events into the dbm_server logs stream.
-      metaBadges: [gt("common.metrics"), gt("common.logs")],
+      metaBadges: [t("common.metrics"), t("common.logs")],
     },
     steps: [
       {
@@ -113,7 +113,7 @@ export default function mysqlCard(subs: CardSubstitutions): RichCardContent {
             label: raw("mysql"),
             icon: tool.terminal,
             code: { lang: "bash", raw: applyUser("mysql -h localhost -u root -p") },
-            note: "Run as a MySQL admin (it prompts for the password).",
+            note: t("ingestion.setupCard.mysqlAdminNote"),
           },
           {
             id: "docker",
@@ -135,7 +135,7 @@ export default function mysqlCard(subs: CardSubstitutions): RichCardContent {
       // Pinned to the DBM-verified contrib release: the Database Monitoring
       // config below needs upstream contrib >= 0.148.0 (the `events:` block is
       // an unknown key on older releases) and was verified at this version.
-      collectorInstallStep(DBM_CONTRIB_VERSION),
+      collectorInstallStep(t, DBM_CONTRIB_VERSION),
       {
         id: "configure",
         titleKey: "ingestion.setupCard.configureCollectorTitle",
@@ -183,14 +183,15 @@ export default function mysqlCard(subs: CardSubstitutions): RichCardContent {
         chip: { kind: "traces", labelKey: "ingestion.setupCard.chipMetrics" },
         completeOn: "detect",
         detectionAnchor: true,
-        // mysql receiver metric names (mysql.buffer_pool.*, mysql.operations, …) —
-        // they land verbatim in the data, so the pills stay untranslated.
+        // What the verify step will show, in prose. These are NOT the receiver metric
+        // names that land in the data (those are mysql.buffer_pool.*, mysql.operations,
+        // …) — they are a plain-English summary of them, so they are translated.
         pills: [
-          raw("Buffer Pool"),
-          raw("Operations"),
-          raw("Threads"),
-          raw("Row Locks"),
-          raw("Handlers"),
+          t("ingestion.setupCard.pillBufferPool"),
+          t("ingestion.setupCard.pillOperations"),
+          t("ingestion.setupCard.pillThreads"),
+          t("ingestion.setupCard.pillRowLocks"),
+          t("ingestion.setupCard.pillHandlers"),
         ],
       },
       // ── Database Monitoring (optional) ──────────────────────────────────

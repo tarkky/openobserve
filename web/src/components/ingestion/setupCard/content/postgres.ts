@@ -18,7 +18,7 @@
 // specifics. Follows the OpenObserve guide:
 // https://openobserve.ai/blog/how-to-monitor-postgresql-performance
 
-import { gt, raw } from "@/types/i18n";
+import { raw, type TranslateFn } from "@/types/i18n";
 
 import { getImageURL } from "@/utils/zincutils";
 import type { CardSubstitutions, RichCardContent } from "../types";
@@ -82,17 +82,17 @@ service:
       processors: [memory_limiter, batch]
       exporters: [otlphttp/openobserve]`;
 
-export default function postgresCard(subs: CardSubstitutions): RichCardContent {
+export default function postgresCard(subs: CardSubstitutions, t: TranslateFn): RichCardContent {
   const tool = sharedToolIcons();
   return {
     provider: {
-      name: "Postgres",
-      tagline: gt("ingestion.setupCard.postgresqlTagline"),
+      name: raw("Postgres"),
+      tagline: t("ingestion.setupCard.postgresqlTagline"),
       logo: getImageURL("images/ingestion/postgres.png"),
       tone: "#336791",
       // Logs too: the optional Database Monitoring steps ship deadlock and
       // blocking-chain events into the dbm_server logs stream.
-      metaBadges: [gt("common.metrics"), gt("common.logs")],
+      metaBadges: [t("common.metrics"), t("common.logs")],
     },
     steps: [
       {
@@ -110,7 +110,7 @@ export default function postgresCard(subs: CardSubstitutions): RichCardContent {
               lang: "bash",
               raw: applyRole("psql -h localhost -U postgres"),
             },
-            note: "Run as a Postgres superuser (psql prompts for its password).",
+            note: t("ingestion.setupCard.postgresSuperuserNote"),
           },
           {
             id: "docker",
@@ -133,7 +133,7 @@ export default function postgresCard(subs: CardSubstitutions): RichCardContent {
       // the Database Monitoring config below needs upstream contrib >= 0.148.0
       // (the `events:` block is an unknown key on older releases) and was
       // verified end-to-end at this version.
-      collectorInstallStep(DBM_CONTRIB_VERSION),
+      collectorInstallStep(t, DBM_CONTRIB_VERSION),
       {
         id: "configure",
         titleKey: "ingestion.setupCard.configureCollectorTitle",
@@ -180,14 +180,15 @@ export default function postgresCard(subs: CardSubstitutions): RichCardContent {
         chip: { kind: "traces", labelKey: "ingestion.setupCard.chipMetrics" },
         completeOn: "detect",
         detectionAnchor: true,
-        // pg_stat_database counter names — they appear verbatim in the ingested
-        // metrics, so translating the pill would desync it from the data.
+        // What the verify step will show, in prose. These are NOT the pg_stat_database
+        // counter names that appear in the ingested metrics — they are a plain-English
+        // summary of them, so they are translated.
         pills: [
-          raw("Active Backends"),
-          raw("Commits"),
-          raw("Rollbacks"),
-          raw("Database Size"),
-          raw("Blocks Read"),
+          t("ingestion.setupCard.pillActiveBackends"),
+          t("ingestion.setupCard.pillCommits"),
+          t("ingestion.setupCard.pillRollbacks"),
+          t("ingestion.setupCard.pillDatabaseSize"),
+          t("ingestion.setupCard.pillBlocksRead"),
         ],
       },
       // ── Database Monitoring (optional) ──────────────────────────────────

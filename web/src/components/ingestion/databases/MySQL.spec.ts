@@ -21,6 +21,7 @@ import { ref } from "vue";
 import MySQL from "./MySQL.vue";
 import mysqlCard from "@/components/ingestion/setupCard/content/mysql";
 import { getDataSourceCard } from "@/components/ingestion/setupCard/registry";
+import { gt } from "@/types/i18n";
 
 const mockEndpoint = ref({
   url: "https://test.openobserve.ai",
@@ -53,7 +54,7 @@ const SUBS = { url: "https://test.openobserve.ai", org: "test-org", token: "dGVz
 
 describe("mysqlCard builder", () => {
   it("builds metadata + step flow", () => {
-    const card = mysqlCard(SUBS);
+    const card = mysqlCard(SUBS, gt);
     expect(card.provider.name).toBe("MySQL");
     // Logs too: the optional Database Monitoring steps ship deadlock and
     // blocking events into the dbm_server logs stream.
@@ -370,7 +371,7 @@ describe("mysqlCard builder", () => {
   });
 
   it("offers mysql / docker / GUI tabs to create the user", () => {
-    const prepare = mysqlCard(SUBS).steps.find((s) => s.id === "prepare")!;
+    const prepare = mysqlCard(SUBS, gt).steps.find((s) => s.id === "prepare")!;
     expect(prepare.variants?.map((v) => v.id)).toEqual(["mysql", "docker", "sql-client"]);
     const mysql = prepare.variants!.find((v) => v.id === "mysql")!.code;
     expect(mysql.raw).toContain("mysql");
@@ -380,7 +381,7 @@ describe("mysqlCard builder", () => {
   });
 
   it("writes a mysql receiver config with the org's exporter", () => {
-    const configure = mysqlCard(SUBS).steps.find((s) => s.id === "configure")!;
+    const configure = mysqlCard(SUBS, gt).steps.find((s) => s.id === "configure")!;
     expect(configure.inputs?.map((i) => i.id)).toEqual(["host", "port"]);
     const config = configure.variants!.find((v) => v.id === "linux-amd64")!.code.raw;
     expect(config).toContain("mysql:");
@@ -395,7 +396,7 @@ describe("MySQL.vue", () => {
     if (wrapper) wrapper.unmount();
   });
   it("renders the shared card for the mySQL slug", () => {
-    expect(getDataSourceCard("mySQL", SUBS)?.provider.name).toBe("MySQL");
+    expect(getDataSourceCard("mySQL", SUBS, gt)?.provider.name).toBe("MySQL");
     wrapper = mount(MySQL, { global: { plugins: [mockStore, mockI18n] } });
     expect(wrapper.findComponent({ name: "SetupCardRenderer" }).exists()).toBe(true);
   });
